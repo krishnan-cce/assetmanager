@@ -1,6 +1,5 @@
 package com.udyata.linentrack.linentrack.repositorynnew;
 
-import com.udyata.linentrack.linentrack.entitynew.checkincheckoutmaster.CheckInCheckOutMaster;
 import com.udyata.linentrack.linentrack.entitynew.itemmaster.ItemMaster;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
