@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="3887f6ad-1544-4d54-a71c-f97d7c8c9e0b">
+	<property name="com.jaspersoft.studio.data.sql.tables">
+		<![CDATA[bGluZW5fY2F0ZWdvcnlfbWFzdGVyICw2NjcsMTUsYTUwYjRiNWUtNzQ5Ni00M2ZkLTg2NmItMGRm
+ODA1NDdiMzc0O2xpbmVuX3N0YXR1cyAsNTQyLDE1LDhjZDI3ZGM1LWQ4YmEtNGY2MS1iZWRkLWFj
+YmNhODI4MmMxZjtsaW5lbl9tYXN0ZXIgLDE1LDE1LDYxZmFhNjI2LWIyZDktNGE3OC1iYjUzLTNi
+MDc4M2FmYjk3YTtyb29tX21hc3RlciAsMjQyLDE1LDQ3ZTg5MmIxLWY0MGItNDdmMS1hYjZjLTlh
+OWNhM2NhYTRjZjtyZmlkdGFnICwxNTAsMTUsNTUyNGJkZjMtNGY5YS00OWNhLWJhZDYtZTU4MGI0
+NDFkZGUyO2xvY2F0aW9uX21hc3RlciAsMzgxLDE1LDQ4NDkxZWVjLWExMWItNDdlOS1hZDNiLTM1
+MWExNjZhMTFkNTs=]]>
+	</property>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="stock_check.jrdax"/>
+	<parameter name="roomId" class="java.lang.Integer"/>
+	<queryString language="SQL">
+		<![CDATA[SELECT 
+    lm.add_date AS AddDate,
+    lm.name AS LinenName,
+    lm.description AS Description,
+    rt.tag_code AS RFIDTag,
+    lcm.name AS LocationName,
+    ls.status AS Status,
+    lc.name AS CategoryName,
+    lc.code AS CategoryCode
+FROM 
+    linen_master lm 
+INNER JOIN rfidtag rt ON rt.id = lm.rfidtag_id
+INNER JOIN room_master rm ON rm.id = lm.room_master_id
+INNER JOIN location_master lcm ON lcm.id = rm.location_master_id
+INNER JOIN linen_status ls ON ls.id = lm.linen_status_id
+INNER JOIN linen_category_master lc ON lc.id = lm.linen_category_master_id
+WHERE rm.id = $P{roomId};
+]]>
+	</queryString>
+	<field name="AddDate" class="java.time.LocalDateTime">
+		<property name="com.jaspersoft.studio.field.name" value="add_date"/>
+		<property name="com.jaspersoft.studio.field.label" value="AddDate"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_master"/>
+	</field>
+	<field name="LinenName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="name"/>
+		<property name="com.jaspersoft.studio.field.label" value="LinenName"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_master"/>
+	</field>
+	<field name="Description" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="description"/>
+		<property name="com.jaspersoft.studio.field.label" value="Description"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_master"/>
+	</field>
+	<field name="RFIDTag" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="tag_code"/>
+		<property name="com.jaspersoft.studio.field.label" value="RFIDTag"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="rfidtag"/>
+	</field>
+	<field name="LocationName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="name"/>
+		<property name="com.jaspersoft.studio.field.label" value="LocationName"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="location_master"/>
+	</field>
+	<field name="Status" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="status"/>
+		<property name="com.jaspersoft.studio.field.label" value="Status"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_status"/>
+	</field>
+	<field name="CategoryName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="name"/>
+		<property name="com.jaspersoft.studio.field.label" value="CategoryName"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_category_master"/>
+	</field>
+	<field name="CategoryCode" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="code"/>
+		<property name="com.jaspersoft.studio.field.label" value="CategoryCode"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="linen_category_master"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="79" splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="35" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="20" width="100" height="30" uuid="0e6cdce1-394f-4905-bb7b-8f57d6a2ee2a"/>
+				<textFieldExpression><![CDATA[$F{LinenName}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="100" y="20" width="100" height="30" uuid="cdea92dd-fc7b-47c3-b08c-5ad4aa7cf4da"/>
+				<textFieldExpression><![CDATA[$F{RFIDTag}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="200" y="20" width="100" height="30" uuid="1a431820-ab2f-4725-8403-3ca657b4a5cf"/>
+				<textFieldExpression><![CDATA[$F{LocationName}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="300" y="20" width="100" height="30" uuid="eb849da6-f864-424a-8982-b498599f324d"/>
+				<textFieldExpression><![CDATA[$F{Status}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="400" y="20" width="100" height="30" uuid="14c51c71-1e8d-487a-a5cd-fe685bef5233"/>
+				<textFieldExpression><![CDATA[$F{CategoryName}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="125" splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

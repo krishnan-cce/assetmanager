@@ -1,0 +1,208 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetDamageEntryMasterList`(IN itemTypeId INT)
+BEGIN
+  select
+itd.id,itd.add_date,itd.is_damaged,itd.is_repaired,itd.issue,itd.remarks,its.status,im.name,rm.room_number,itm.name item_type
+ from item_damage_entry_master itd
+ inner join room_master rm on rm.id=itd.room_master_id
+ inner join item_status its on its.id = itd.item_status_id
+ inner join item_master im on im.id = itd.item_master_id
+ inner join item_type_master itm on itm.id = im.item_type_master_id
+ where itm.id = itemTypeId
+ order by itd.id desc;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetCheckInOutDetails`(IN `type` VARCHAR(20), IN checkInID INT)
+BEGIN
+    IF `type` = 'SCANNED ITEMS' THEN
+        SELECT cct.trans_number, rm.room_number, im.name, ccm.item_status,rt.tag_code, cct.add_date, its.status item_status
+        FROM check_in_check_out_master ccm
+        INNER JOIN room_master rm ON rm.id = ccm.room_master_id
+        INNER JOIN check_in_check_out_trans cct ON cct.check_in_check_out_master_id = ccm.id
+        INNER JOIN item_master im ON im.id = cct.item_master_id
+         INNER JOIN item_status its ON its.id = im.item_status_id
+        INNER JOIN rfidtag rt ON rt.id = im.rfidtag_id
+        WHERE ccm.id = checkInID;
+    ELSEIF `type` = 'MISSING ITEMS' THEN
+        WITH cte AS (
+            SELECT ccm.id, cct.trans_number, rm.room_number, im.name, ccm.item_status, im.id AS item_master_id, rt.tag_code, cct.add_date, rm.id AS room_master_id
+            FROM check_in_check_out_master ccm
+            INNER JOIN room_master rm ON rm.id = ccm.room_master_id
+            INNER JOIN check_in_check_out_trans cct ON cct.check_in_check_out_master_id = ccm.id
+            INNER JOIN item_master im ON im.id = cct.item_master_id
+            INNER JOIN rfidtag rt ON rt.id = im.rfidtag_id
+            WHERE ccm.id =checkInID and ccm.item_status <> 'AFTER-WASH'
+        )
+        SELECT im.id item_master_id,im.name, rt.tag_code, its.status item_status , rm.room_number
+        FROM item_master im
+        INNER JOIN room_master rm ON rm.id = im.room_master_id
+        INNER JOIN rfidtag rt ON rt.id = im.rfidtag_id
+        INNER JOIN item_status its ON its.id = im.item_status_id
+        WHERE rm.id IN (SELECT room_master_id FROM cte)
+        AND im.id NOT IN (SELECT item_master_id FROM cte);
+
+	 ELSEIF `type` = 'ALL ITEMS' THEN
+	SELECT im.id item_master_id,im.name, rt.tag_code, iss.status item_status , rm.room_number from check_in_check_out_master ccm
+		INNER JOIN check_in_check_out_trans cct on cct.check_in_check_out_master_id = ccm.id
+		INNER JOIN item_master im on im.id = cct.item_master_id
+		INNER JOIN room_master rm on rm.id = im.room_master_id
+		INNER JOIN rfidtag rt on rt.id = im.rfidtag_id
+		INNER JOIN item_status iss on iss.id = im.item_status_id
+		WHERE ccm.id =checkInID;
+    ELSE
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid type parameter';
+    END IF;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetDashBoardData`()
+BEGIN
+    SELECT
+        (SELECT COUNT(*) FROM item_master WHERE is_damaged = 1) AS linens_damaged,
+        (SELECT COUNT(*) FROM item_master WHERE item_status_id = 3) AS linens_in_washing,
+        (SELECT COUNT(*) FROM item_master WHERE item_status_id = 2) AS linens_in_collection,
+        (SELECT COUNT(*) FROM item_master WHERE item_status_id = 6) AS linens_lost,
+        (SELECT COUNT(*) FROM item_master WHERE is_damaged = 12) AS assets_repaired,
+        (SELECT COUNT(*) FROM item_master WHERE is_damaged = 10) AS assets_damaged,
+        (SELECT COUNT(*) FROM item_master WHERE item_status_id = 11) AS assets_lost,
+        (SELECT COUNT(*) FROM item_master WHERE item_type_master_id = 1) AS total_linen,
+        (SELECT COUNT(*) FROM item_master WHERE item_type_master_id = 2) AS total_asset;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetItemCategoryMasterList`(IN itemTypeId INT)
+BEGIN
+   SELECT itc.id, itc.name
+   FROM item_category_master itc
+   INNER JOIN item_type_master itp ON itp.id = itc.item_type_master_id
+   WHERE itp.id = itemTypeId;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetItemMasterList`(IN itemTypeId INT, IN roomId BIGINT)
+BEGIN
+     SET @slno = 0;
+
+    SELECT
+		@slno := @slno + 1 AS slno,
+        lm.add_date AS AddDate,
+        lm.name AS LinenName,
+        lm.description AS Description,
+        rt.tag_code AS RFIDTag,
+        lcm.name AS LocationName,
+        ls.status AS Status,
+        lc.name AS CategoryName
+    FROM
+        item_master lm
+    INNER JOIN rfidtag rt ON rt.id = lm.rfidtag_id
+    INNER JOIN room_master rm ON rm.id = lm.room_master_id
+    INNER JOIN location_master lcm ON lcm.id = rm.location_master_id
+    INNER JOIN item_status ls ON ls.id = lm.item_status_id
+    INNER JOIN item_category_master lc ON lc.id = lm.item_category_master_id
+    WHERE rm.id = roomId and lm.item_type_master_id = itemTypeId;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetItemStatusList`(IN itemTypeName VARCHAR(255))
+BEGIN
+    select its.id,its.status from item_status its
+	inner join item_type_master itm on itm.id = its.item_type_master_id
+	where itm.name=itemTypeName;
+
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetLinenHistoryListByLinenMaster`(
+    IN linenMasterId INT
+)
+BEGIN
+    -- Dummy data, replace with your actual query logic
+    SELECT
+        linenMasterId AS id,
+        '2023-01-01' AS history_date,
+        'Cleaned' AS status
+    FROM
+        dual
+    WHERE
+        linenMasterId = linenMasterId;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetLinenMasterList`(
+    IN roomId INT
+)
+BEGIN
+  SET @slno = 0;
+    SELECT
+		@slno := @slno + 1 AS slno,
+        lm.add_date AS AddDate,
+        lm.name AS LinenName,
+        lm.description AS Description,
+        rt.tag_code AS RFIDTag,
+        lcm.name AS LocationName,
+        ls.status AS Status,
+        lc.name AS CategoryName,
+        lc.code AS CategoryCode
+    FROM
+        linen_master lm
+    INNER JOIN rfidtag rt ON rt.id = lm.rfidtag_id
+    INNER JOIN room_master rm ON rm.id = lm.room_master_id
+    INNER JOIN location_master lcm ON lcm.id = rm.location_master_id
+    INNER JOIN linen_status ls ON ls.id = lm.linen_status_id
+    INNER JOIN linen_category_master lc ON lc.id = lm.linen_category_master_id
+    WHERE rm.id = roomId;
+
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `GetLinenRepairList`(IN locationMasterId INT)
+BEGIN
+    select
+		lmm.name,lcm.name,rm.room_number,rf.tag_code,dm.issue,dm.is_repaired
+	from
+		linen_master lmm
+	inner join room_master rm on rm.id=lmm.room_master_id
+	inner join location_master lm on lm.id = rm.location_master_id
+	inner join linen_category_master lcm on lcm.id=lmm.linen_category_master_id
+	inner join rfidtag rf on rf.id = lmm.rfidtag_id
+	inner join damage_entry_master dm on dm.item_id = lmm.id
+
+where lm.id=locationMasterId and dm.is_repaired=0;
+END
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE DEFINER=`soundfortune_new`@`%` PROCEDURE `RoomMaster`()
+BEGIN
+    SELECT * FROM room_master;
+END
